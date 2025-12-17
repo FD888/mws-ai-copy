@@ -7,13 +7,20 @@ WORKDIR /app
 COPY src/frontend/package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --legacy-peer-deps
+
+# Copy all necessary config files for Nx/Angular workspace
+COPY src/frontend/nx.json ./
+COPY src/frontend/project.json ./
+COPY src/frontend/tsconfig*.json ./
+COPY src/frontend/eslint.config.mjs ./
 
 # Copy source code
-COPY src/frontend/ ./
+COPY src/frontend/src ./src
+COPY src/frontend/public ./public
 
 # Build Angular app for production
-RUN npm run build -- --configuration production
+RUN npx nx build --configuration=production --verbose
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
