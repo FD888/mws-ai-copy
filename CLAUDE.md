@@ -586,6 +586,142 @@ curl -X POST http://localhost:8000/api/analyze \
 
 ---
 
-**Последнее обновление**: 17 декабря 2025
-**Версия документа**: 1.0
+---
+
+## 🔗 Frontend Integration (COMPLETED)
+
+**Статус**: ✅ Интегрирован (17 декабря 2025)
+
+### Что было сделано:
+
+#### Backend изменения:
+1. **CORS middleware** в Orchestrator (`src/orchestrator/app/main.py:28`)
+   - Разрешены origins: localhost:4200, localhost, crdlts.github.io
+   - Полная поддержка CORS для cross-origin requests
+
+#### Docker интеграция:
+2. **Frontend Dockerfile** (`src/frontend/Dockerfile`)
+   - Multi-stage build: Node.js → Nginx
+   - Production-ready Angular build
+
+3. **Nginx конфигурация** (`src/frontend/nginx.conf`)
+   - Angular routing support (SPA)
+   - Gzip compression
+   - Security headers
+   - Static asset caching
+
+4. **Docker Compose** (`docker-compose.yml:83`)
+   - Frontend service на порту 4200
+   - Зависимость от Orchestrator
+   - Подключение к mws-network
+
+#### Frontend код:
+5. **Environment config** (`src/frontend/src/environments/`)
+   - `environment.ts`: dev (localhost:8000)
+   - `environment.prod.ts`: production (orchestrator:8000)
+
+6. **API Models** (`src/frontend/src/app/core/models/api.models.ts`)
+   - TypeScript интерфейсы для всех API responses
+   - Полное соответствие backend Pydantic схемам
+
+7. **Services**:
+   - `AuthService` (`src/frontend/src/app/core/services/auth.service.ts`)
+     - Получение JWT токена
+     - Хранение в localStorage
+     - Auth state management
+
+   - `AnalysisService` (`src/frontend/src/app/core/services/analysis.service.ts`)
+     - Submit анализ (`/api/analyze`)
+     - Get report (`/api/reports/{id}`)
+     - Polling с автоматическим обновлением
+
+8. **HTTP Interceptor** (`src/frontend/src/app/core/interceptors/auth.interceptor.ts`)
+   - Автоматическое добавление JWT токена в headers
+
+9. **Components**:
+   - Login интеграция с AuthService
+   - Results component для отображения findings и stats
+
+### Архитектура после интеграции:
+
+```
+┌─────────────────────────────────────┐
+│  Browser: http://localhost:4200     │
+│                                      │
+│  Angular Frontend (Nginx)            │
+│  ├─ Login → AuthService             │
+│  ├─ Dashboard → AnalysisService     │
+│  └─ Results → API data display      │
+│                                      │
+│      ↓ HTTP + JWT                    │
+└──────────────────────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│  Docker Network: mws-network         │
+│                                       │
+│  Orchestrator :8000                  │
+│  ├─ /api/token (JWT)                │
+│  ├─ /api/analyze (submit)           │
+│  └─ /api/reports/{id} (results)     │
+│                                       │
+│  Moderator :8001                     │
+│  Report Injector :8002               │
+│  Audit :8003                         │
+└──────────────────────────────────────┘
+```
+
+### Как запустить:
+
+```bash
+# Запуск всего стека (включая frontend)
+docker-compose up -d --build
+
+# Frontend доступен на http://localhost:4200
+# Backend API на http://localhost:8000
+
+# Для разработки frontend отдельно:
+cd src/frontend
+npm install
+npm start  # Dev server на http://localhost:4200
+```
+
+### API Flow пример:
+
+```typescript
+// 1. Login
+authService.getToken().subscribe(res => {
+  // JWT сохранён в localStorage
+  // Автоматически добавляется в все requests
+});
+
+// 2. Analyze
+analysisService.analyze({
+  tool: 'gitleaks',
+  report: sarifJson
+}).subscribe(res => {
+  console.log('Report ID:', res.report_id);
+});
+
+// 3. Poll for results
+analysisService.pollReport(reportId).subscribe(res => {
+  if (res.status === 'completed') {
+    console.log('Findings:', res.findings);
+    console.log('Stats:', res.stats);
+  }
+});
+```
+
+### Следующие шаги (опционально):
+
+- [ ] Добавить route для `/dashboard/results/:id`
+- [ ] Upload SARIF файлов через UI
+- [ ] Визуализация статистики (графики)
+- [ ] WebSocket для real-time updates вместо polling
+- [ ] Export результатов в JSON/CSV
+- [ ] Фильтрация и поиск по findings
+
+---
+
+**Последнее обновление**: 17 декабря 2025 (Frontend Integration)
+**Версия документа**: 1.1
 **Автор**: Claude (AI assistant)

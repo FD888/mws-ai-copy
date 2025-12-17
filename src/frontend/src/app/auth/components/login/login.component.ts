@@ -1,12 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import {
   FormBuilder,
   FormGroup,
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   standalone: true,
@@ -18,6 +19,10 @@ import {
 export class LoginComponent {
   form: FormGroup;
   isSubmitting = false;
+  errorMessage: string | null = null;
+
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   constructor(private fb: FormBuilder) {
     this.form = this.fb.group({
@@ -33,13 +38,21 @@ export class LoginComponent {
     }
 
     this.isSubmitting = true;
+    this.errorMessage = null;
 
-    // TODO: сюда воткнёшь реальный AuthService
-    console.log('Login payload:', this.form.value);
-
-    // имитация завершения
-    setTimeout(() => {
-      this.isSubmitting = false;
-    }, 700);
+    // Get JWT token from backend
+    this.authService.getToken().subscribe({
+      next: (response) => {
+        console.log('Login successful, token received');
+        this.isSubmitting = false;
+        // Navigate to dashboard
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err) => {
+        console.error('Login failed:', err);
+        this.errorMessage = 'Failed to authenticate. Please try again.';
+        this.isSubmitting = false;
+      }
+    });
   }
 }

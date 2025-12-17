@@ -1,0 +1,117 @@
+<div class="results-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="loading">
+    <div class="spinner"></div>
+    <p>Analyzing report...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="error">
+    <p>{{ error() }}</p>
+  </div>
+
+  <!-- Results Display -->
+  <div *ngIf="taskStatus() && !isLoading()" class="results">
+    <!-- Stats Summary -->
+    <div class="stats-summary" *ngIf="stats">
+      <div class="stat-card">
+        <span class="stat-label">Total Findings</span>
+        <span class="stat-value">{{ stats.total_findings }}</span>
+      </div>
+      <div class="stat-card success">
+        <span class="stat-label">False Positives (Filtered)</span>
+        <span class="stat-value">{{ stats.filtered_fp }}</span>
+      </div>
+      <div class="stat-card danger">
+        <span class="stat-label">True Positives (Remaining)</span>
+        <span class="stat-value">{{ stats.remaining_tp }}</span>
+      </div>
+    </div>
+
+    <!-- Task Status -->
+    <div class="task-status">
+      <span class="status-badge" [class]="taskStatus()!.status">
+        {{ taskStatus()!.status }}
+      </span>
+      <span class="report-id">Report ID: {{ taskStatus()!.report_id }}</span>
+    </div>
+
+    <!-- Findings Table -->
+    <div class="findings-section">
+      <h2>Findings</h2>
+
+      <!-- True Positives -->
+      <div class="findings-group" *ngIf="truePositives.length > 0">
+        <h3 class="danger">⚠️ True Positives ({{ truePositives.length }})</h3>
+        <table class="findings-table">
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Rule ID</th>
+              <th>Snippet</th>
+              <th>Confidence</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let finding of truePositives">
+              <td class="file-path">{{ finding.file_path }}</td>
+              <td class="rule-id">{{ finding.rule_id }}</td>
+              <td class="code-snippet">
+                <code>{{ finding.secret_snippet }}</code>
+              </td>
+              <td>
+                <span class="confidence-badge" [class]="getSeverityClass(finding.confidence)">
+                  {{ (finding.confidence * 100).toFixed(0) }}%
+                </span>
+              </td>
+              <td class="reasons">
+                <ul>
+                  <li *ngFor="let reason of finding.reasons">{{ reason }}</li>
+                </ul>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- False Positives -->
+      <div class="findings-group" *ngIf="falsePositives.length > 0">
+        <h3 class="success">✅ False Positives ({{ falsePositives.length }})</h3>
+        <table class="findings-table">
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Rule ID</th>
+              <th>Snippet</th>
+              <th>Confidence</th>
+              <th>AI Verdict</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let finding of falsePositives">
+              <td class="file-path">{{ finding.file_path }}</td>
+              <td class="rule-id">{{ finding.rule_id }}</td>
+              <td class="code-snippet">
+                <code>{{ finding.secret_snippet }}</code>
+              </td>
+              <td>
+                <span class="confidence-badge low">
+                  {{ (finding.confidence * 100).toFixed(0) }}%
+                </span>
+              </td>
+              <td class="ai-verdict">
+                {{ finding.ai_verdict || 'N/A' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- No Findings -->
+      <div class="no-findings" *ngIf="findings.length === 0">
+        <p>No findings to display.</p>
+      </div>
+    </div>
+  </div>
+</div>

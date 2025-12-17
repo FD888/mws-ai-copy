@@ -80,6 +80,22 @@ services:
       - report-injector
     restart: unless-stopped
 
+  # ==================== FRONTEND SERVICE ====================
+  frontend:
+    build:
+      context: .
+      dockerfile: src/frontend/Dockerfile
+    container_name: mws-frontend
+    ports:
+      - "4200:80"
+    networks:
+      - mws-network
+    depends_on:
+      - orchestrator
+    restart: unless-stopped
+    environment:
+      - API_URL=http://orchestrator:8000
+
 # ==================== NETWORKS ====================
 networks:
   mws-network:

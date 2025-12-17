@@ -3,6 +3,7 @@ import logging
 from typing import Optional, Dict  # 👈 Dict сюда
 
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Request, Depends  # 👈 Depends сюда
+from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .schemas import AnalyzeRequest, AnalyzeResponse, TaskStatusResponse
@@ -22,6 +23,20 @@ logging.basicConfig(
 logger = logging.getLogger("orchestrator")
 
 app = FastAPI(title=settings.PROJECT_NAME)
+
+# ---- CORS Configuration ----
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:4200",  # Angular dev server
+        "http://localhost",       # Docker frontend
+        "http://127.0.0.1:4200",
+        "https://crdlts.github.io",  # GitHub Pages
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ---- Audit-клиент для этого сервиса ----
 
