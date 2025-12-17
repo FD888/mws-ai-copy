@@ -1,0 +1,10 @@
+node_modules
+dist
+.angular
+.nx
+*.log
+.history
+.vscode
+coverage
+e2e
+*.md
